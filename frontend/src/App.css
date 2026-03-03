@@ -1,0 +1,149 @@
+/* --- Global Container --- */
+.container {
+    padding: 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+    font-family: 'Arial Black', Gadget, sans-serif;
+    background-color: #f4f7f6;
+    min-height: 100vh;
+}
+
+h1 {
+    color: #003366; /* Deep Navy Blue */
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 2rem;
+}
+
+/* --- Shared Section Styling --- */
+.section {
+    border: 3px solid #003366; /* Blue Border */
+    padding: 2rem;
+    border-radius: 25px; /* Round Cornered Boxes */
+    margin-bottom: 1.5rem;
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.section-transfer {
+    border: 3px solid #b30000; /* Crimson Red Border */
+}
+
+h3 {
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    font-size: 1.1rem;
+}
+
+/* --- Input Fields --- */
+input {
+    padding: 15px;
+    width: 100%;
+    margin-bottom: 15px;
+    display: block;
+    box-sizing: border-box;
+    border: 2px solid #ccc;
+    border-radius: 50px; /* Fully Round Pill Inputs */
+    font-size: 1rem;
+    font-weight: bold;
+    color: #003366;
+    transition: border-color 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border-color: #b30000; /* Red focus for all inputs */
+}
+
+/* --- Side-by-Side Layout for Account Access --- */
+.input-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 5px;
+}
+
+.input-row input {
+    flex: 1; /* Makes Account Number and Starting Price equal width */
+}
+
+/* --- Button Styling --- */
+button {
+    padding: 12px 25px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 50px; /* Round Pill Buttons */
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+button:active {
+    transform: scale(0.96);
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* --- Specific Button Colors --- */
+.button-group, .button-group-access {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.button-group-access button {
+    flex: 1;
+}
+
+.btn-fetch { background-color: #003366; } /* Navy */
+.btn-create { background-color: #28a745; } /* Success Green */
+
+.btn-deposit { background-color: #003366; flex: 1; }
+.btn-withdraw { background-color: #b30000; flex: 1; }
+.btn-transfer { background-color: #b30000; width: 100%; margin-top: 10px; }
+
+/* --- Balance Display --- */
+.balance-box {
+    margin-top: 1.5rem;
+    background-color: #b30000; /* Red Balance Box */
+    color: white;
+    padding: 25px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(179, 0, 0, 0.3);
+}
+
+.balance-box p {
+    margin: 0;
+    font-size: 0.8rem;
+    opacity: 0.9;
+    letter-spacing: 1px;
+}
+
+.balance-box h2 {
+    margin: 10px 0 0 0;
+    font-size: 2.8rem;
+}
+
+/* --- Utilities --- */
+hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 25px 0;
+}
+
+.animate-in {
+    animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}

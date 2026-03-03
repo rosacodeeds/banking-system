@@ -1,0 +1,14 @@
+/* GLOBAL RESET */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f0f2f5; /* Light grey background so the app stands out */
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
