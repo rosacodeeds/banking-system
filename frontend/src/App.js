@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // 1. Added useEffect
 import axios from 'axios';
 import './App.css'; 
 
 function App() {
   const [accNum, setAccNum] = useState('');
-  const [pin, setPin] = useState(''); // NEW: Pin state for security
+  const [pin, setPin] = useState('');
   const [accountInfo, setAccountInfo] = useState(null);
   const [targetAcc, setTargetAcc] = useState('');
   const [amount, setAmount] = useState('');
@@ -12,23 +12,31 @@ function App() {
 
   const API_BASE = "http://localhost:5000/api/accounts";
 
-  // 1. Check existing balance
+  // 2. EFFECT HOOK: Load the account number from Local Storage on startup
+  useEffect(() => {
+    const savedAccount = localStorage.getItem('finSense_lastAccount');
+    if (savedAccount) {
+      setAccNum(savedAccount);
+    }
+  }, []);
+
+  // 3. CHECK BALANCE: Now saves the account number to Local Storage
   const checkBalance = async () => {
     if (!accNum) return alert("Please enter an account number");
     try {
       const res = await axios.get(`${API_BASE}/${accNum}/balance`);
-      
-      // Verification: Only show info if PIN matches (Basic Frontend Security)
       setAccountInfo(res.data);
+      
+      // Persist account number (Success path)
+      localStorage.setItem('finSense_lastAccount', accNum);
     } catch (err) {
       setAccountInfo(null);
       alert(err.response?.data?.error || "Account not found.");
     }
   };
 
-  // 2. Create new account with Starting Price and PIN
+  // 4. CREATE ACCOUNT: Now saves the new account number to Local Storage
   const createAccount = async () => {
-    // Validation: Require PIN for creation
     if (!accNum || !initialBalance || !pin) {
       return alert("Enter Account Number, Starting Price, and a 4-digit PIN");
     }
@@ -37,23 +45,24 @@ function App() {
       const res = await axios.post(`${API_BASE}/create`, {
         accountNumber: accNum,
         initialBalance: parseFloat(initialBalance) || 0,
-        pin: pin // NEW: Sending PIN to backend
+        pin: pin 
       });
       
       alert("Account created successfully!");
       setAccountInfo(res.data.account);
+      
+      // Persist account number
+      localStorage.setItem('finSense_lastAccount', accNum);
+      
       setInitialBalance('');
-      setPin(''); // Clear pin after success
+      setPin(''); 
     } catch (err) {
       alert("CREATE FAILED: " + (err.response?.data?.error || err.message));
     }
   };
 
-  // 3. Deposit or Withdraw logic
   const handleAction = async (actionType) => {
     if (!amount) return alert("Please enter an amount");
-    
-    // Safety Check: Ensure user is "logged in" with their PIN before transaction
     const enteredPin = prompt("Please enter your 4-digit PIN to authorize:");
     if (enteredPin !== accountInfo.pin) return alert("Incorrect PIN! Transaction cancelled.");
 
@@ -69,10 +78,8 @@ function App() {
     }
   };
 
-  // 4. Transfer logic
   const executeTransfer = async () => {
     if (!targetAcc || !amount) return alert("Enter target account and amount");
-    
     const enteredPin = prompt("Confirm PIN to authorize transfer:");
     if (enteredPin !== accountInfo.pin) return alert("Incorrect PIN!");
 
