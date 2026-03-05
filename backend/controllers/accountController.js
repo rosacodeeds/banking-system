@@ -3,12 +3,24 @@ const { transferFunds } = require('../services/bankingService');
 
 /**
  * 0. CREATE ACCOUNT
+ * Includes validation to ensure the PIN is exactly 4 numeric digits.
  */
 exports.createAccount = async (req, res) => {
     const { accountNumber, initialBalance, pin } = req.body;
+
+    // --- NEW VALIDATION LOGIC ---
+    // This Regex checks: Does the pin consist of exactly 4 digits (0-9)?
+    const pinRegex = /^\d{4}$/;
+
     if (!accountNumber || !pin) {
         return res.status(400).json({ error: "Account Number and PIN are required" });
     }
+
+    if (!pinRegex.test(pin)) {
+        return res.status(400).json({ error: "Invalid PIN format. Must be exactly 4 digits (0-9)." });
+    }
+    // ----------------------------
+
     try {
         const result = await pool.query(
             'INSERT INTO accounts (account_number, balance, pin) VALUES ($1, $2, $3) RETURNING id, account_number, balance, pin',
@@ -63,6 +75,7 @@ exports.handleDeposit = async (req, res) => {
             [amount, accountNumber]
         );
         if (result.rowCount === 0) return res.status(404).json({ error: "Account not found" });
+        
         await pool.query(
             'INSERT INTO transactions (account_id, type, amount, reference) VALUES ($1, $2, $3, $4)',
             [result.rows[0].id, 'DEPOSIT', amount, 'Standard Deposit']
@@ -86,6 +99,7 @@ exports.handleWithdraw = async (req, res) => {
             [amount, accountNumber]
         );
         if (result.rowCount === 0) return res.status(400).json({ error: "Insufficient funds" });
+        
         await pool.query(
             'INSERT INTO transactions (account_id, type, amount, reference) VALUES ($1, $2, $3, $4)',
             [result.rows[0].id, 'WITHDRAW', amount, 'Standard Withdraw']
@@ -107,4 +121,4 @@ exports.handleTransfer = async (req, res) => {
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
-}; // <--- MAKE SURE THIS LAST BRACE IS COPIED!
+};

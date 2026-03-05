@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // 1. Added useEffect
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css'; 
 
@@ -12,7 +12,7 @@ function App() {
 
   const API_BASE = "http://localhost:5000/api/accounts";
 
-  // 2. EFFECT HOOK: Load the account number from Local Storage on startup
+  // EFFECT HOOK: Load the account number from Local Storage on startup
   useEffect(() => {
     const savedAccount = localStorage.getItem('finSense_lastAccount');
     if (savedAccount) {
@@ -20,7 +20,7 @@ function App() {
     }
   }, []);
 
-  // 3. CHECK BALANCE: Now saves the account number to Local Storage
+  // CHECK BALANCE: Now saves the account number to Local Storage
   const checkBalance = async () => {
     if (!accNum) return alert("Please enter an account number");
     try {
@@ -35,11 +35,14 @@ function App() {
     }
   };
 
-  // 4. CREATE ACCOUNT: Now saves the new account number to Local Storage
+  // CREATE ACCOUNT: Now saves the new account number to Local Storage
   const createAccount = async () => {
     if (!accNum || !initialBalance || !pin) {
       return alert("Enter Account Number, Starting Price, and a 4-digit PIN");
     }
+
+    // Double check PIN length before sending to backend
+    if (pin.length !== 4) return alert("PIN must be exactly 4 digits");
     
     try {
       const res = await axios.post(`${API_BASE}/create`, {
@@ -64,6 +67,8 @@ function App() {
   const handleAction = async (actionType) => {
     if (!amount) return alert("Please enter an amount");
     const enteredPin = prompt("Please enter your 4-digit PIN to authorize:");
+    
+    // Authorization check
     if (enteredPin !== accountInfo.pin) return alert("Incorrect PIN! Transaction cancelled.");
 
     try {
@@ -81,6 +86,8 @@ function App() {
   const executeTransfer = async () => {
     if (!targetAcc || !amount) return alert("Enter target account and amount");
     const enteredPin = prompt("Confirm PIN to authorize transfer:");
+    
+    // Authorization check
     if (enteredPin !== accountInfo.pin) return alert("Incorrect PIN!");
 
     try {
@@ -110,13 +117,22 @@ function App() {
             value={accNum}
             onChange={(e) => setAccNum(e.target.value)} 
           />
+          
+          {/* UPDATED PIN INPUT: Only allows digits */}
           <input 
             type="password"
             placeholder="Set 4-Digit PIN" 
             value={pin}
-            onChange={(e) => setPin(e.target.value)} 
+            onChange={(e) => {
+              const val = e.target.value;
+              // REGEX: Only updates state if the typed value is empty OR contains only digits
+              if (val === '' || /^\d+$/.test(val)) {
+                setPin(val);
+              }
+            }} 
             maxLength="4"
           />
+
           <input 
             type="number"
             placeholder="Starting Price ($)" 
