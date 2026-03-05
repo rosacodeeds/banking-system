@@ -1,3 +1,9 @@
+body {
+    background: #e3f0fc; /* Nice light blue */
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
 /* --- Global Container --- */
 .container {
     padding: 2rem;

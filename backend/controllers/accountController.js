@@ -2,87 +2,109 @@ const pool = require('../config/db');
 const { transferFunds } = require('../services/bankingService');
 
 /**
- * CREATE ACCOUNT
- * Matches React: setAccountInfo(res.data.account)
+ * 0. CREATE ACCOUNT
  */
 exports.createAccount = async (req, res) => {
-    const { accountNumber, initialBalance } = req.body;
+    const { accountNumber, initialBalance, pin } = req.body;
+    if (!accountNumber || !pin) {
+        return res.status(400).json({ error: "Account Number and PIN are required" });
+    }
     try {
-        // Insert into DB using snake_case
         const result = await pool.query(
-            'INSERT INTO accounts (account_number, balance) VALUES ($1, $2) RETURNING id, account_number, balance',
-            [accountNumber, initialBalance || 0]
+            'INSERT INTO accounts (account_number, balance, pin) VALUES ($1, $2, $3) RETURNING id, account_number, balance, pin',
+            [accountNumber, initialBalance || 0, pin]
         );
-
-        // Return to React using camelCase
-        res.json({
+        res.status(201).json({
             message: "Account created successfully",
             account: {
                 accountNumber: result.rows[0].account_number,
-                balance: parseFloat(result.rows[0].balance)
+                balance: parseFloat(result.rows[0].balance),
+                pin: result.rows[0].pin
             }
         });
     } catch (err) {
         console.error("CREATE ERROR:", err.message);
-        res.status(400).json({ error: "Account already exists or invalid data" });
+        if (err.code === '23505') return res.status(400).json({ error: "Account already exists" });
+        res.status(500).json({ error: "Database error" });
     }
 };
 
 /**
  * 1. GET ACCOUNT BALANCE
- * Matches React: setAccountInfo(res.data)
  */
 exports.getBalance = async (req, res) => {
     try {
         const { accountNumber } = req.params;
         const result = await pool.query(
-            'SELECT account_number, balance FROM accounts WHERE account_number = $1', 
+            'SELECT account_number, balance, pin FROM accounts WHERE account_number = $1', 
             [accountNumber]
         );
-        
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "Account not found" });
-        }
-        
-        // Return keys that match your React state properties
+        if (result.rowCount === 0) return res.status(404).json({ error: "Account not found" });
         res.json({
             accountNumber: result.rows[0].account_number,
-            balance: parseFloat(result.rows[0].balance)
+            balance: parseFloat(result.rows[0].balance),
+            pin: result.rows[0].pin
         });
     } catch (err) {
-        console.error("GET BALANCE ERROR:", err);
         res.status(500).json({ error: "Database error" });
     }
 };
 
 /**
  * 2. DEPOSIT
- * Matches React: handleAction('deposit')
  */
 exports.handleDeposit = async (req, res) => {
     const { accountNumber } = req.params;
     const { amount } = req.body;
-
     try {
         if (amount <= 0) throw new Error("Amount must be > 0");
-
         const result = await pool.query(
             'UPDATE accounts SET balance = balance + $1 WHERE account_number = $2 RETURNING id, balance',
             [amount, accountNumber]
         );
-
         if (result.rowCount === 0) return res.status(404).json({ error: "Account not found" });
-
-        // Log transaction
         await pool.query(
             'INSERT INTO transactions (account_id, type, amount, reference) VALUES ($1, $2, $3, $4)',
             [result.rows[0].id, 'DEPOSIT', amount, 'Standard Deposit']
         );
-
         res.json({ message: "Deposit successful", updatedBalance: parseFloat(result.rows[0].balance) });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 };
 
-// ... keep handleWithdraw and handleTransfer the same as your previous version
+/**
+ * 3. WITHDRAW
+ */
+exports.handleWithdraw = async (req, res) => {
+    const { accountNumber } = req.params;
+    const { amount } = req.body;
+    try {
+        if (amount <= 0) throw new Error("Amount must be > 0");
+        const result = await pool.query(
+            'UPDATE accounts SET balance = balance - $1 WHERE account_number = $2 AND balance >= $1 RETURNING id, balance',
+            [amount, accountNumber]
+        );
+        if (result.rowCount === 0) return res.status(400).json({ error: "Insufficient funds" });
+        await pool.query(
+            'INSERT INTO transactions (account_id, type, amount, reference) VALUES ($1, $2, $3, $4)',
+            [result.rows[0].id, 'WITHDRAW', amount, 'Standard Withdraw']
+        );
+        res.json({ message: "Withdraw successful", updatedBalance: parseFloat(result.rows[0].balance) });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
+/**
+ * 4. TRANSFER
+ */
+exports.handleTransfer = async (req, res) => {
+    const { fromAccount, toAccount, amount } = req.body;
+    try {
+        await transferFunds(fromAccount, toAccount, amount);
+        res.json({ message: "Transfer successful" });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+}; // <--- MAKE SURE THIS LAST BRACE IS COPIED!
