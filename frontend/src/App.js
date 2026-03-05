@@ -41,7 +41,6 @@ function App() {
       return alert("Enter Account Number, Starting Price, and a 4-digit PIN");
     }
 
-    // Double check PIN length before sending to backend
     if (pin.length !== 4) return alert("PIN must be exactly 4 digits");
     
     try {
@@ -54,9 +53,7 @@ function App() {
       alert("Account created successfully!");
       setAccountInfo(res.data.account);
       
-      // Persist account number
       localStorage.setItem('finSense_lastAccount', accNum);
-      
       setInitialBalance('');
       setPin(''); 
     } catch (err) {
@@ -66,9 +63,8 @@ function App() {
 
   const handleAction = async (actionType) => {
     if (!amount) return alert("Please enter an amount");
-    const enteredPin = prompt("Please enter your 4-digit PIN to authorize:");
+    const enteredPin = prompt(`Please enter your 4-digit PIN to authorize ${actionType}:`);
     
-    // Authorization check
     if (enteredPin !== accountInfo.pin) return alert("Incorrect PIN! Transaction cancelled.");
 
     try {
@@ -87,7 +83,6 @@ function App() {
     if (!targetAcc || !amount) return alert("Enter target account and amount");
     const enteredPin = prompt("Confirm PIN to authorize transfer:");
     
-    // Authorization check
     if (enteredPin !== accountInfo.pin) return alert("Incorrect PIN!");
 
     try {
@@ -118,14 +113,12 @@ function App() {
             onChange={(e) => setAccNum(e.target.value)} 
           />
           
-          {/* UPDATED PIN INPUT: Only allows digits */}
           <input 
             type="password"
             placeholder="Set 4-Digit PIN" 
             value={pin}
             onChange={(e) => {
               const val = e.target.value;
-              // REGEX: Only updates state if the typed value is empty OR contains only digits
               if (val === '' || /^\d+$/.test(val)) {
                 setPin(val);
               }
@@ -133,17 +126,24 @@ function App() {
             maxLength="4"
           />
 
-          <input 
-            type="number"
-            placeholder="Starting Price ($)" 
-            value={initialBalance}
-            onChange={(e) => setInitialBalance(e.target.value)} 
-          />
+          {/* STARTING PRICE: Only visible when NOT logged in */}
+          {!accountInfo && (
+            <input 
+              type="number"
+              placeholder="Starting Price ($)" 
+              value={initialBalance}
+              onChange={(e) => setInitialBalance(e.target.value)} 
+            />
+          )}
         </div>
 
         <div className="button-group-access">
           <button className="btn-fetch" onClick={checkBalance}>GET BALANCE</button>
-          <button className="btn-create" onClick={createAccount}>CREATE ACCOUNT</button>
+          
+          {/* CREATE ACCOUNT BUTTON: Only visible when NOT logged in */}
+          {!accountInfo && (
+            <button className="btn-create" onClick={createAccount}>CREATE ACCOUNT</button>
+          )}
         </div>
       </div>
 
@@ -177,6 +177,15 @@ function App() {
               onChange={(e) => setTargetAcc(e.target.value)} 
             />
             <button className="btn-transfer" onClick={executeTransfer}>EXECUTE TRANSFER</button>
+            
+            {/* Added a Logout/Reset button to return to the Create screen if needed */}
+            <button 
+              className="btn-reset" 
+              style={{marginTop: '20px', background: '#ccc'}} 
+              onClick={() => { setAccountInfo(null); setAccNum(''); setPin(''); }}
+            >
+              LOGOUT / NEW SEARCH
+            </button>
           </div>
         </div>
       )}
